@@ -315,7 +315,6 @@ def decorate(func, caller, extras=(), kwsyntax=False):
             return caller(func, *(extras + args), **kw)
 
     fun.__doc__ = func.__doc__
-    fun.__wrapped__ = func
     fun.__signature__ = sig
     fun.__qualname__ = func.__qualname__
     # builtin functions like defaultdict.__setitem__ lack many attributes
@@ -343,6 +342,7 @@ def decorate(func, caller, extras=(), kwsyntax=False):
         fun.__dict__.update(func.__dict__)
     except AttributeError:
         pass
+    fun.__wrapped__ = func
     return fun
 
 
@@ -384,10 +384,10 @@ def decorator(caller, _func=None, kwsyntax=False):
     dec.__signature__ = sig.replace(parameters=dec_params)
     dec.__name__ = caller.__name__
     dec.__doc__ = caller.__doc__
-    dec.__wrapped__ = caller
     dec.__qualname__ = caller.__qualname__
     dec.__kwdefaults__ = getattr(caller, '__kwdefaults__', None)
     dec.__dict__.update(caller.__dict__)
+    dec.__wrapped__ = caller
     return dec
 
 
