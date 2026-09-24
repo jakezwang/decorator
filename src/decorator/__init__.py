@@ -41,7 +41,7 @@ import functools
 from contextlib import _GeneratorContextManager
 from collections import namedtuple
 from inspect import Parameter, iscoroutinefunction, isgeneratorfunction
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 try:
     import annotationlib  # in Python 3.14+
 
@@ -298,21 +298,25 @@ def decorate(func, caller, extras=(), kwsyntax=False):
     sig = inspect_sig(func)
     if isinstance(func, functools.partial):
         func = functools.update_wrapper(func, func.func)
+    fun: Callable[..., Any]
     if iscoroutinefunction(caller):
-        async def fun(*args, **kw):
+        async def async_fun(*args, **kw):
             if not kwsyntax:
                 args, kw = fix(args, kw, sig)
             return await caller(func, *(extras + args), **kw)
+        fun = async_fun
     elif isgeneratorfunction(caller):
-        def fun(*args, **kw):
+        def generator_fun(*args, **kw):
             if not kwsyntax:
                 args, kw = fix(args, kw, sig)
             yield from caller(func, *(extras + args), **kw)
+        fun = generator_fun
     else:
-        def fun(*args, **kw):
+        def sync_fun(*args, **kw):
             if not kwsyntax:
                 args, kw = fix(args, kw, sig)
             return caller(func, *(extras + args), **kw)
+        fun = sync_fun
 
     fun.__doc__ = func.__doc__
     fun.__signature__ = sig
